@@ -61,6 +61,14 @@
   .stackRow{display:grid;grid-template-columns:90px 1fr 40px;gap:8px;align-items:center;font-size:.82rem}
   .stackBar{display:flex;height:16px;border-radius:4px;overflow:hidden;background:#edf0f5}
   .stackBar i{display:block;height:100%}
+  .kindCard{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fbfcfe}
+  .kindCard .stackRow{margin-bottom:6px}
+  .kindCard .stackRow span{font-weight:700;font-size:.9rem}
+  .kindKpis{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .kindKpis div{background:#f2f5fa;border-radius:8px;padding:5px 4px;text-align:center}
+  .kindKpis small{display:block;font-size:.7rem;color:var(--sub)}
+  .kindKpis b{font-size:1rem}
+  .kindKpis .ok b{color:var(--ok)} .kindKpis .ng b{color:var(--ng)} .kindKpis .re b{color:var(--re)}
   .legend{display:flex;gap:12px;font-size:.75rem;color:var(--sub);margin-top:6px}
   .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
   svg{width:100%;height:auto;display:block}
@@ -171,7 +179,7 @@
     <div class="hint" style="margin-top:-6px">불량률 = 불량 ÷ (양품 + 불량) × 100, 재검은 따로 집계</div>
 
     <div class="chartTitle">종류별 수량</div>
-    <div class="stack" id="byClass"><div class="empty">데이터가 없어요.</div></div>
+    <div class="stack" id="byClass" style="gap:8px"><div class="empty">데이터가 없어요.</div></div>
     <div class="legend"><span><i style="background:var(--ok)"></i>양품</span><span><i style="background:var(--ng)"></i>불량</span><span><i style="background:var(--re)"></i>재검</span></div>
 
     <div class="chartTitle">시간대별 불량률 추이 (분 단위)</div>
@@ -330,12 +338,20 @@
       const max = Math.max(...kinds.map(k => byKind[k].양품+byKind[k].불량+byKind[k].재검));
       $('byClass').innerHTML = kinds.map(k => {
         const c = byKind[k], t = c.양품+c.불량+c.재검, w = t/max*100;
-        return `<div class="stackRow"><span>${escapeHtml(k)}</span>
+        const rate = c.양품+c.불량 ? (c.불량/(c.양품+c.불량)*100).toFixed(1) : '0';
+        return `<div class="kindCard"><div class="stackRow"><span>${escapeHtml(k)}</span>
           <div class="stackBar" style="width:${w}%;min-width:12px">
             <i style="flex:${c.양품};background:var(--ok)"></i>
             <i style="flex:${c.불량};background:var(--ng)"></i>
             <i style="flex:${c.재검};background:var(--re)"></i>
-          </div><b>${t}</b></div>`;
+          </div><b>${t}</b></div>
+          <div class="kindKpis">
+            <div><small>총 개수</small><b>${t}</b></div>
+            <div class="ok"><small>양품</small><b>${c.양품}</b></div>
+            <div class="ng"><small>불량</small><b>${c.불량}</b></div>
+            <div class="re"><small>재검</small><b>${c.재검}</b></div>
+            <div><small>불량률</small><b>${rate}%</b></div>
+          </div></div>`;
       }).join('');
     }
 
