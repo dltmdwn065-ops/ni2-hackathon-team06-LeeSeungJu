@@ -27,6 +27,7 @@
   button.primary{background:var(--accent);color:#fff}
   button.dark{background:var(--navy);color:#fff}
   button.danger{background:#fbe9e9;color:var(--ng)}
+  button.stop{background:var(--ng);color:#fff}
   button:disabled{opacity:.45;cursor:not-allowed}
   .hint{font-size:.8rem;color:var(--sub);margin-top:6px}
   .status{font-size:.85rem;margin-top:8px;padding:8px 10px;border-radius:8px;background:#eef3ff;color:#23408e}
@@ -130,7 +131,7 @@
 
     <div class="row" style="margin-top:12px">
       <button class="primary" id="btnStart" disabled>판정 시작</button>
-      <button id="btnStop" disabled>정지</button>
+      <button class="stop" id="btnStop" disabled>정지</button>
       <button class="dark" id="btnJudge" disabled>지금 판정</button>
     </div>
     <div class="row" style="margin-top:8px">
@@ -202,7 +203,9 @@
   const $ = id => document.getElementById(id);
   const STORE_KEY = 'lineguard_log_v1';
   const IGNORE = ['배경','없음','background','none','empty'];
-  const DEMO_CLASSES = ['볼트_양품','볼트_불량','너트_양품','너트_불량','와셔_양품','와셔_불량'];
+  const DEMO_CLASSES = ['와셔_양품','와셔_불량','볼트_양품','볼트_불량','너트_양품','너트_불량'];
+  const KIND_ORDER = ['와셔','볼트','너트']; // 화면 표시 순서
+  const showName = s => String(s).replace(/_/g, ' '); // "와셔_양품" → "와셔 양품"
 
   let model = null, webcam = null, demo = false, running = false;
   let lastPred = null, autoTimer = null, loopId = null;
@@ -245,7 +248,7 @@
   function renderProbs(pred){
     const sorted = [...pred].sort((a,b) => b.probability - a.probability);
     $('probs').innerHTML = sorted.map(p => `
-      <div class="prob"><span>${escapeHtml(p.className)}</span>
+      <div class="prob"><span>${escapeHtml(showName(p.className))}</span>
       <div class="bar"><i style="width:${(p.probability*100).toFixed(0)}%"></i></div>
       <b>${(p.probability*100).toFixed(0)}%</b></div>`).join('');
   }
@@ -320,7 +323,8 @@
     // 종류별
     const byKind = {};
     log.forEach(r => { (byKind[r.kind] ||= {양품:0,불량:0,재검:0})[r.result]++; });
-    const kinds = Object.keys(byKind);
+    const rank = k => { const i = KIND_ORDER.indexOf(k); return i < 0 ? 99 : i; };
+    const kinds = Object.keys(byKind).sort((a,b) => rank(a) - rank(b));
     if (!kinds.length){ $('byClass').innerHTML = '<div class="empty">데이터가 없어요.</div>'; }
     else {
       const max = Math.max(...kinds.map(k => byKind[k].양품+byKind[k].불량+byKind[k].재검));
@@ -407,7 +411,7 @@
     setStatus('데모 모드: 웹캠·모델 없이 무작위 "샘플 데이터"로 판정해요. 실제 기업 데이터가 아니에요.', 'ok');
     $('stage').querySelectorAll('canvas,img').forEach(n => n.remove());
     $('placeholder').style.display = '';
-    $('placeholder').innerHTML = '데모 모드 (샘플 데이터)<br>볼트·너트·와셔 가상 부품을 판정해요.';
+    $('placeholder').innerHTML = '데모 모드 (샘플 데이터)<br>와셔·볼트·너트 가상 부품의 양품·불량을 판정해요.';
     enableControls();
   });
 
